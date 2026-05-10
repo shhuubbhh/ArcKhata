@@ -1,14 +1,20 @@
+import React from "react";
 import { PrivyProvider as RealPrivyProvider, usePrivy as useRealPrivy } from "@privy-io/react-auth";
 import { useMemo } from "react";
 import type { PrivyProfile } from "./store";
 
-// Use an environment variable for the App ID, with a fallback for local development.
+// Default fallback ID for testing if VITE_PRIVY_APP_ID is missing
 const PRIVY_APP_ID = import.meta.env.VITE_PRIVY_APP_ID || "cmoy4iag0006i0cjv1s0rxjcv";
 
 export function PrivyProvider({ children }: { children: React.ReactNode }) {
+  // If App ID is missing, provide a clear console warning
+  if (!import.meta.env.VITE_PRIVY_APP_ID) {
+    console.warn("Using fallback Privy App ID. Set VITE_PRIVY_APP_ID in your .env for production.");
+  }
+
   return (
     <RealPrivyProvider
-      appId={PRIVY_APP_ID}
+      appId={PRIVY_APP_ID || "missing-app-id"}
       config={{
         loginMethods: ["email", "wallet", "google"],
         appearance: {
@@ -53,14 +59,11 @@ export function usePrivy() {
     return profile;
   }, [user]);
 
-  return useMemo(
-    () => ({
-      ready,
-      authenticated,
-      user: mappedUser,
-      login,
-      logout,
-    }),
-    [ready, authenticated, mappedUser, login, logout],
-  );
+  return {
+    ready,
+    authenticated,
+    user: mappedUser,
+    login,
+    logout,
+  };
 }
