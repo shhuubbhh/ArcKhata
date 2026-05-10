@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { useStore } from "@/lib/store";
 import { usePrivy } from "@/lib/privy";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Wallet, Store, User, Mail, Phone, Chrome } from "lucide-react";
 
@@ -22,38 +22,38 @@ function LoginPage() {
   const navigate = useNavigate();
   const [walletInput, setWalletInput] = useState("");
   const [shopName, setShopName] = useState("");
-  const isSyncingRef = useRef(false);
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
 
   // Auto-resume: if Privy session is already persisted, finish merchant login.
   useEffect(() => {
-    // CRITICAL: only sync if FULLY authenticated and not already syncing
-    if (!privy.ready || !privy.authenticated || !privy.user || sessionUser || isSyncingRef.current) return;
+    // Only auto-login if Privy is ready, we have a user, and we're NOT already logged into a local session.
+    // Also check that we didn't just come here from a logout action.
+    if (!privy.ready || !privy.user || sessionUser) return;
     
-    const finishLogin = async () => {
-      isSyncingRef.current = true;
-      const profile = shopName.trim() ? { ...privy.user, displayName: shopName.trim() } : privy.user;
-      try {
-        const { merchant, created } = await loginMerchantWithPrivy(profile);
-        if (created) {
-          toast.success(`Welcome to ArcLedger, ${merchant.businessName}`, {
-            description: `Wallet ${merchant.walletAddress.slice(0, 10)}…`,
-          });
-        } else {
-          toast.success(`Welcome back, ${merchant.businessName}`);
-        }
-        navigate({ to: "/merchant" });
-      } catch (error) {
-        console.error("Login component error:", error);
-      } finally {
-        isSyncingRef.current = false;
-      }
-    };
-
-    finishLogin();
-  }, [privy.ready, privy.authenticated, privy.user, sessionUser, loginMerchantWithPrivy, navigate, shopName]);
+    console.log("Auto-login triggered for", privy.user.id);
+    const profile = shopName.trim() ? { ...privy.user, displayName: shopName.trim() } : privy.user;
+    const { merchant, created } = loginMerchantWithPrivy(profile);
+    
+    if (created) {
+      toast.success(`Welcome to ArcLedger, ${merchant.businessName}`, {
+        description: `Wallet ${merchant.walletAddress.slice(0, 10)}…`,
+      });
+    } else {
+      toast.success(`Welcome back, ${merchant.businessName}`);
+    }
+    
+    navigate({ to: "/merchant" });
+  }, [privy.ready, privy.user, sessionUser, loginMerchantWithPrivy, navigate, shopName]);
 
   const handleLogin = () => {
-    privy.login();
+    console.log("Login button clicked");
+    console.log("Privy state:", { ready: privy.ready, authenticated: privy.authenticated });
+    if (privy.ready) {
+      privy.login();
+    } else {
+      console.warn("Privy is not ready yet");
+    }
   };
 
   const connectCustomer = () => {

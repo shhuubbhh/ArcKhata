@@ -1,3 +1,4 @@
+import React from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useStore, shortAddr } from "@/lib/store";
 import { usePrivy } from "@/lib/privy";
@@ -78,7 +79,7 @@ export function AppHeader() {
   );
 }
 
-function NavLink({ to, children, current }: { to: string; children: React.ReactNode; current: string }) {
+function NavLink({ to, children, current }: { to: any; children: React.ReactNode; current: string }) {
   const active = current === to || (to !== "/" && current.startsWith(to));
   return (
     <Link
